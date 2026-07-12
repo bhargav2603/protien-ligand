@@ -30,15 +30,51 @@ Git option:
 %pip install -q -e /content/code
 ```
 
-## Cell 2 — run the pilot (produces the graphs)
+## Cell 2 — edit ONE input file, then run it
+
+Edit `/content/code/input.json` (or write it from the notebook), then run. Change
+values here and rerun — nothing else to touch.
 
 ```python
-import qbind
-result, report, figs = qbind.run("/content/out")
+import json, os
+inp = {
+    "mode": "molecular",          # "reference" | "molecular"
+    "output_dir": "/content/out",
+    "backend": "analytic",        # analytic (no deps) | dft | casscf | sqd
+    "study_file": "/content/code/examples/study_fe_ligands/study.json",
+    "reference": {"n_ligands": 18, "systematic_bias": 1.8, "seed": 7},
+}
+json.dump(inp, open("/content/code/input.json", "w"), indent=2)
+
+from qbind.input_spec import run_from_input
+result, report, figs = run_from_input("/content/code/input.json")
 print("VERDICT:", report.verdict)
 ```
 
-## Cell 3 — view the graphs inline
+## Cell 2b — the interactive dashboard (self-contained HTML)
+
+Every run writes `results/dashboard.html`. Show it inline, or download it to
+share:
+
+```python
+from IPython.display import IFrame, HTML
+html = open("/content/out/results/dashboard.html", encoding="utf-8").read()
+display(HTML(html))                       # renders inline (theme toggle, hover, sweep)
+# or download:
+from google.colab import files; files.download("/content/out/results/dashboard.html")
+```
+
+## Cell 2c — LIVE sliders (reference mode; recomputes in real time)
+
+```python
+from qbind.viz.explorer import reference_explorer
+reference_explorer()      # drag DFT-bias / noise / #ligands / seed and watch it update
+```
+
+Live recompute works only for the synthetic path (milliseconds). For real
+CASSCF/SQD, precompute a grid instead: `qbind.sweep(biases=[0,1,2,3])`.
+
+## Cell 3 — view the static graphs inline
 
 ```python
 from IPython.display import Image, display
@@ -79,18 +115,25 @@ Each writes the same graph set + `REPORT.md`. Zip/download as in the earlier cel
 
 ---
 
-## Moving from cluster pilot to a full protein study (later, needs Vina + DMET)
+## Real result on your own clusters (needs pyscf)
 
-Install the extra and swap stages via a config:
+Install the science extra, point `study_file` at your own `study.json` (see
+`examples/study_fe_ligands/`), set `"backend": "casscf"` in `input.json`, rerun:
 
 ```python
-%pip install -q -e "{root}[science]"        # pyscf, qiskit, qiskit-addon-sqd, ffsim
+%pip install -q -e "{root}[science]"        # pyscf (+ qiskit,qiskit-addon-sqd,ffsim for sqd)
 ```
 
-Then wire `docking="vina"`, a real `embedding`, and `correlated_solver="casscf"`
-(answer the question classically first) or `"sqd"` (reuses `qadv`; emulate first,
-hardware last). The adapters and their plug points are in
-`src/qbind/classical/docking.py` and `src/qbind/qm/`.
+`casscf` answers the research question with no quantum computer; `sqd` is the
+quantum path (reuses `qadv`; emulate first, hardware last). Expect to tune
+spin/charge/active space and SCF convergence on real metal clusters.
+
+## Full protein study (later, needs Vina + DMET)
+
+The docking (`src/qbind/classical/docking.py::VinaDockingEngine`) and DMET
+embedding (`src/qbind/qm/embedding.py`) adapters are the scale-up from clusters
+to a full pocket. They are the later step; the cluster path above is the first
+real result.
 
 ## Outputs (under the out dir you pass)
 

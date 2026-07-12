@@ -1,0 +1,18 @@
+{
+  "_comment": "THE ONE FILE YOU EDIT. Change values here and rerun `qbind input`. Physics constants are NOT here on purpose (see src/qbind/constants.py).",
+
+  "mode": "molecular",
+  "output_dir": "./out",
+
+  "backend": "analytic",
+  "study_file": "examples/study_fe_ligands/study.json",
+
+  "reference": {
+    "n_ligands": 18,
+    "fraction_coordinating": 0.4,
+    "systematic_bias": 1.8,
+    "classical_noise": 0.6,
+    "correlated_noise": 0.3,
+    "seed": 7
+  }
+}
