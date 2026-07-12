@@ -1,111 +1,84 @@
-# Running this pipeline in Google Colab
+# Running the pilot in Google Colab
 
-The pipeline is a proper installable package (`src/qadv`). Colab is just a thin
-driver: **install the package + its science extra → call it.** Nothing
-scientific is duplicated in the notebook, so the same code runs on Colab, a
-workstation, or an HPC node.
+Two installable packages live in `src/`:
+- **`qbind`** — the drug-rescoring pipeline + graphs (the thing you run).
+- **`qadv`** — the SQD kernel, reused by `qbind`'s `SQDCorrelatedSolver`.
 
-Pick **one** "get the code" option (A or B), then run the cells below it.
+The pilot (`qbind`) needs only numpy/scipy/matplotlib/pandas, so it runs and
+produces graphs immediately — no quantum-chemistry stack required. Colab is a
+thin driver: get the code, install, run.
 
----
+## Cell 1 — get the code + install
 
-## Cell 1 — get the code + install (upload, option A)
-
-Zip the project folder on your machine (the folder containing `pyproject.toml`
-and `src/`), then:
+Upload option: zip the project folder (the one with `pyproject.toml` and `src/`).
 
 ```python
 from google.colab import files
-up = files.upload()                         # pick your qadv.zip
+up = files.upload()                         # pick your qbind.zip
 import zipfile, io, glob, os
 name = next(iter(up))
 with zipfile.ZipFile(io.BytesIO(up[name])) as z:
     z.extractall('/content/code')
 root = os.path.dirname(glob.glob('/content/code/**/pyproject.toml', recursive=True)[0])
-%pip install -q -e "{root}[science]"        # installs qadv + pyscf/qiskit/ffsim/...
+%pip install -q -e "{root}"                 # pilot deps only
 ```
 
-## Cell 1 — get the code + install (git, option B)
+Git option:
 
 ```python
 !git clone https://github.com/<you>/<your-repo>.git /content/code
-%pip install -q -e "/content/code[science]"
+%pip install -q -e /content/code
 ```
 
-> GPU runtime recommended (Runtime → Change runtime type → GPU). On a GPU
-> runtime also run `%pip install -q qiskit-aer-gpu`.
-
-## Cell 2 — mount Drive (checkpoints/results survive disconnects)
+## Cell 2 — run the pilot (produces the graphs)
 
 ```python
-from google.colab import drive
-drive.mount('/content/drive')
-PROJ = '/content/drive/MyDrive/qchem_advantage'
+import qbind
+result, report, figs = qbind.run("/content/out")
+print("VERDICT:", report.verdict)
 ```
 
-## Cell 3 — (optional) IBM Quantum credentials
-
-Skip to run the simulation path only; Stage 1 hardware phases are then marked
-`PENDING_HARDWARE`.
+## Cell 3 — view the graphs inline
 
 ```python
-from qiskit_ibm_runtime import QiskitRuntimeService
-QiskitRuntimeService.save_account(
-    channel="ibm_quantum_platform", token="YOUR_TOKEN", overwrite=True)
+from IPython.display import Image, display
+for f in figs:
+    display(Image(filename=f))
+```
+
+## Cell 4 — see both designed behaviours
+
+```python
+from qbind import Config, ReferenceModel, run
+# signal: DFT has a systematic metal-ligand error the correction removes
+run("/content/out_signal", Config(reference=ReferenceModel(systematic_bias=2.0)))
+# honest null: nothing to fix -> report says so
+run("/content/out_null",   Config(reference=ReferenceModel(systematic_bias=0.0,
+                                   classical_noise=0.5, correlated_noise=0.5)))
 ```
 
 ---
 
-## Cell 4 — run
+## Moving from pilot to a real study (later, needs the science stack)
+
+Install the extra and swap stages via a config:
 
 ```python
-import qadv
-ctx = qadv.make_context(PROJ)     # one object carries all config + I/O
-
-qadv.run_stage0(ctx)              # validation: FeP ~20q, CASCI anchor, DFT figure
-qadv.build_report(ctx)            # writes results/REPORT.md
+%pip install -q -e "{root}[science]"        # pyscf, qiskit, qiskit-addon-sqd, ffsim
 ```
 
-Then Stage 1 (advantage regime). Without IBM access it uses the MPS surrogate
-(clearly labelled NOT advantage); with access it submits an async job and
-returns — re-run the same cell later to retrieve:
+Then wire `docking="vina"`, a real `embedding`, and `correlated_solver="casscf"`
+(answer the question classically first) or `"sqd"` (reuses `qadv`; emulate first,
+hardware last). The adapters and their plug points are in
+`src/qbind/classical/docking.py` and `src/qbind/qm/`.
 
-```python
-qadv.run_stage1(ctx, use_hardware=True)   # or use_hardware=False to force MPS
-qadv.build_report(ctx)
-```
-
-Equivalent from a shell cell (the console script is installed):
-
-```python
-!QADV_PROJ="{PROJ}" qadv all --no-hardware
-# or:  !python -m qadv stage0 --proj "{PROJ}"
-```
-
----
-
-## What lands in your Drive folder (`PROJ`)
+## Outputs (under the out dir you pass)
 
 ```
-qchem_advantage/
-├── checkpoints/    *.pkl (typed results) + job_id_*.txt   (resume points)
-├── results/        REPORT.md, cpd1_sqd_sweep.npy
-├── figures/        fig1_dft_gap.png, fig2_sqd_convergence.png, fig2b_cpd1_convergence.png
-├── logs/run.log
-└── DECISIONS.md    every autonomous decision, with justification
+out/
+├── figures/    fig1..fig6 PNGs
+├── results/    REPORT.md, delta_report.json, ranked_candidates.json
+├── checkpoints/ study_result.pkl, delta_report.pkl
+├── run.log
+└── DECISIONS.md
 ```
-
-## Resuming after a disconnect
-
-Re-run the install + `make_context` cells and call the same `run_stageN(ctx)`.
-Completed phases load from checkpoints; a submitted hardware job is retrieved by
-its saved `job_id`. Never re-runs completed work.
-
-## If a package version breaks an API call
-
-Only two functions are version-sensitive:
-`qadv.quantum.sqd._diagonalize_once` (the `qiskit-addon-sqd` call) and
-`qadv.quantum.ansatz.build_lucj` (the `ffsim` LUCJ call). They target
-`ffsim >= 0.0.55` and `qiskit-addon-sqd >= 0.10`. Everything else (SCF, AVAS,
-CASCI, DFT, reporting) is unaffected. Gate 0b will catch a wrong integral
-convention before any hardware credits are spent.

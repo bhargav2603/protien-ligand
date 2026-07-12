@@ -3,22 +3,27 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "qadv"
-version = "0.2.0"
-description = "Autonomous SQD pipeline for drug-relevant metalloenzymes (P450 Compound I)."
+name = "qbind"
+version = "0.1.0"
+description = "SQD-corrected rescoring of approved drugs against a metalloenzyme pocket, with a quantified quantum-vs-classical ranking delta."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
-authors = [{ name = "qadv" }]
+authors = [{ name = "qbind" }]
 
-# Core numerics only. The heavy quantum-chemistry stack is an optional extra so
-# the package imports (and its pure logic is testable) without them installed.
+# The analysis + reference pipeline runs on these alone (no quantum-chem stack).
+# That is deliberate: the whole plumbing + graphs are testable without pyscf.
 dependencies = [
     "numpy>=1.26",
+    "scipy>=1.11",
+    "matplotlib>=3.7",
+    "pandas>=2.0",
     "psutil>=5.9",
 ]
 
 [project.optional-dependencies]
+# Real correlated solver (SQD/CASSCF) + embedding. Needed only to replace the
+# reference solver with genuine quantum chemistry.
 science = [
     "pyscf>=2.5,<2.9",
     "qiskit>=1.2,<2.0",
@@ -26,12 +31,11 @@ science = [
     "qiskit-ibm-runtime>=0.29",
     "qiskit-addon-sqd>=0.10",
     "ffsim>=0.0.55",
-    "scipy>=1.11",
-    "matplotlib>=3.7",
 ]
 dev = ["pytest>=7.4"]
 
 [project.scripts]
+qbind = "qbind.__main__:main"
 qadv = "qadv.__main__:main"
 
 [tool.setuptools.packages.find]
