@@ -1,0 +1,7 @@
+{
+  "_comment": "Carbonic anhydrase II Zn + sulfonamide proxies. The CONTROL (d10, expect ~no correlated effect).",
+  "mode": "molecular",
+  "output_dir": "./out_ca2",
+  "backend": "analytic",
+  "study_file": "examples/ca2_sulfonamides/study.json"
+}

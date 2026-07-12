@@ -33,6 +33,24 @@ def _build_reference_stages(cfg: Config):
     )
 
 
+def score_ligands(stages, fragments, strong_names) -> list[LigandScore]:
+    """Pure scoring loop (no I/O). Reused by run_study and the sensitivity sweep."""
+    scores: list[LigandScore] = []
+    for lig in stages["ligands"]:
+        dock = stages["docking"].dock(lig)
+        comp = stages["complementarity"].score(lig)
+        interactions: list[FragmentInteraction] = []
+        for frag in fragments:
+            k = stages["classical"].interaction(lig, frag)
+            q = (stages["correlated"].interaction(lig, frag)
+                 if frag.name in strong_names else None)
+            interactions.append(FragmentInteraction(
+                ligand_id=lig.ligand_id, fragment_name=frag.name,
+                classical_term=k, correlated_term=q))
+        scores.append(rescore.build_score(lig, dock, comp, interactions))
+    return scores
+
+
 def run_study(run: Run, cfg: Config) -> tuple[StudyResult, delta.DeltaReport]:
     if not cfg.is_reference:
         raise NotImplementedError(
@@ -50,22 +68,8 @@ def run_study(run: Run, cfg: Config) -> tuple[StudyResult, delta.DeltaReport]:
                ",".join(f.name for f in strong) or "none",
                "selected by natural-orbital multireference diagnostic; only these "
                "spend the quantum/correlated budget")
-    strong_names = {f.name for f in strong}
 
-    scores: list[LigandScore] = []
-    for lig in ligands:
-        dock = stages["docking"].dock(lig)
-        comp = stages["complementarity"].score(lig)
-        interactions: list[FragmentInteraction] = []
-        for frag in fragments:
-            k = stages["classical"].interaction(lig, frag)
-            q = (stages["correlated"].interaction(lig, frag)
-                 if frag.name in strong_names else None)
-            interactions.append(FragmentInteraction(
-                ligand_id=lig.ligand_id, fragment_name=frag.name,
-                classical_term=k, correlated_term=q))
-        scores.append(rescore.build_score(lig, dock, comp, interactions))
-
+    scores = score_ligands(stages, fragments, {f.name for f in strong})
     report = delta.compute(scores)
     result = StudyResult(
         target_name=cfg.target_name, pocket=cfg.pocket, scores=scores,
