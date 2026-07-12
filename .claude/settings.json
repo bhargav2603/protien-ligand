@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c \"import os,psutil; print\\('cores',os.cpu_count\\(\\)\\); print\\('RAM GB', round\\(psutil.virtual_memory\\(\\).total/1e9,1\\)\\)\")",
+      "Bash(pip install *)",
+      "Bash(wsl --status)",
+      "Bash(wsl -l -v)",
+      "Bash(conda --version)",
+      "Bash(gcc --version)",
+      "Bash(where cl *)",
+      "Bash(wsl --list --online)"
+    ]
+  }
+}

@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qadv"
+version = "0.2.0"
+description = "Autonomous SQD pipeline for drug-relevant metalloenzymes (P450 Compound I)."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "qadv" }]
+
+# Core numerics only. The heavy quantum-chemistry stack is an optional extra so
+# the package imports (and its pure logic is testable) without them installed.
+dependencies = [
+    "numpy>=1.26",
+    "psutil>=5.9",
+]
+
+[project.optional-dependencies]
+science = [
+    "pyscf>=2.5,<2.9",
+    "qiskit>=1.2,<2.0",
+    "qiskit-aer>=0.15",
+    "qiskit-ibm-runtime>=0.29",
+    "qiskit-addon-sqd>=0.10",
+    "ffsim>=0.0.55",
+    "scipy>=1.11",
+    "matplotlib>=3.7",
+]
+dev = ["pytest>=7.4"]
+
+[project.scripts]
+qadv = "qadv.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
