@@ -1,11 +1,13 @@
-"""Correlated solvers for the strongly-correlated fragment (CorrelatedSolver).
+"""Correlated solvers for the PROTEIN / DMET path (integral-driven).
 
-Reference implementation replays study terms. The SQD implementation reuses the
-`qadv` kernel (AVAS + CASCI-consistent integrals + SQD subspace sweep); the
-CASSCF implementation is the classical correlated stand-in you should use FIRST
-(the research question is answerable without a quantum computer -- see the
-project notes). All must reduce to the classical value in the weakly-correlated
-limit so the delta stays a clean measurement.
+NOTE: for the runnable molecular-cluster pipeline the real solvers are geometry-
+driven and live in `qbind/chem/backends.py` (DFTBackend | CASSCFBackend |
+SQDBackend). This module holds the future protein-path variants that consume a
+fragment's *embedded integrals* from `qm/embedding.py` (DMET/FMO) rather than a
+geometry, plus the reference replay used by the synthetic orchestrator. CASSCF
+is the classical correlated stand-in to use FIRST (no quantum computer needed);
+all must reduce to the classical value in the weakly-correlated limit so the
+delta stays a clean measurement.
 """
 from __future__ import annotations
 

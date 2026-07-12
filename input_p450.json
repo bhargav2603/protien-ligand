@@ -1,0 +1,7 @@
+{
+  "_comment": "P450 heme-Fe + azole-proxy N-donors. The 'quantum matters' target (Fe spin-crossover). Fill experimental_dg in the study.json from ChEMBL, then set backend to casscf/sqd.",
+  "mode": "molecular",
+  "output_dir": "./out_p450",
+  "backend": "analytic",
+  "study_file": "examples/p450_azoles/study.json"
+}

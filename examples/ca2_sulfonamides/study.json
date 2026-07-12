@@ -1,0 +1,107 @@
+{
+  "target_name": "Carbonic anhydrase II (Zn) + sulfonamide/N-donor proxies (CONTROL)",
+  "pocket": "Zn active site (Zn-amine3 His proxy)",
+  "_note": "Zn(II) d10 closed shell -> expected NULL correlated effect. This is the control that proves the method reports 'no effect' when there is none.",
+  "chemistry": {
+    "basis": "def2-SVP",
+    "xc": "wb97x-d",
+    "ao_labels": [
+      "Zn 3d"
+    ]
+  },
+  "ligands": [
+    {
+      "ligand_id": "ammonia",
+      "complex_xyz": "ammonia.xyz",
+      "fragment_atoms": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "ligand_atoms": null,
+      "charges": {
+        "fragment": 2,
+        "ligand": 0,
+        "complex": 2
+      },
+      "spins": {
+        "fragment": 0,
+        "ligand": 0,
+        "complex": 0
+      },
+      "experimental_dg": null
+    },
+    {
+      "ligand_id": "methylamine",
+      "complex_xyz": "methylamine.xyz",
+      "fragment_atoms": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "ligand_atoms": null,
+      "charges": {
+        "fragment": 2,
+        "ligand": 0,
+        "complex": 2
+      },
+      "spins": {
+        "fragment": 0,
+        "ligand": 0,
+        "complex": 0
+      },
+      "experimental_dg": null
+    },
+    {
+      "ligand_id": "methanesulfonamide",
+      "complex_xyz": "methanesulfonamide.xyz",
+      "fragment_atoms": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "ligand_atoms": null,
+      "charges": {
+        "fragment": 2,
+        "ligand": -1,
+        "complex": 1
+      },
+      "spins": {
+        "fragment": 0,
+        "ligand": 0,
+        "complex": 0
+      },
+      "experimental_dg": null
+    }
+  ]
+}

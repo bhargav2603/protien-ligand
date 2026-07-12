@@ -1,8 +1,12 @@
 """End-to-end molecular pipeline with the analytic backend (no pyscf needed)."""
+from pathlib import Path
+
 from qbind import run_molecular
 from qbind.chem import examples
 from qbind.chem.backends import AnalyticBackend
 from qbind.chem.interaction import interaction_energy
+
+_EXAMPLE_STUDY = Path(__file__).parents[1] / "examples" / "study_fe_ligands" / "study.json"
 
 
 def test_example_jobs_shape():
@@ -36,3 +40,13 @@ def test_correlated_backend_moves_coordinating_ligands(tmp_path):
     result, report, _ = run_molecular(tmp_path, backend="analytic")
     assert any(abs(s.delta) > 1e-6 for s in result.scores)
     assert report.quantum_changed_ranking
+
+
+def test_run_from_shipped_study_file(tmp_path):
+    # The real-input path: study.json -> jobs -> graphs, with the no-deps backend.
+    result, report, figs = run_molecular(tmp_path, backend="analytic",
+                                         study_file=str(_EXAMPLE_STUDY))
+    assert [s.ligand_id for s in result.scores] == ["CO", "NH3", "H2O"]
+    assert (tmp_path / "results" / "REPORT.md").exists()
+    assert len(figs) == 5
+    assert result.target_name.startswith("Fe-ligand-clusters")

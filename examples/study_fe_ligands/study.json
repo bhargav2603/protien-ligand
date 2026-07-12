@@ -1,0 +1,38 @@
+{
+  "target_name": "Fe-ligand-clusters (ILLUSTRATIVE)",
+  "pocket": "Fe-center",
+  "chemistry": {
+    "basis": "def2-SVP",
+    "xc": "wb97x-d",
+    "ao_labels": ["Fe 3d", "Fe 4d"]
+  },
+  "ligands": [
+    {
+      "ligand_id": "CO",
+      "complex_xyz": "Fe-CO.xyz",
+      "fragment_atoms": [0],
+      "ligand_atoms": null,
+      "charges": { "fragment": 0, "ligand": 0, "complex": 0 },
+      "spins":   { "fragment": 4, "ligand": 0, "complex": 4 },
+      "experimental_dg": -12.0
+    },
+    {
+      "ligand_id": "NH3",
+      "complex_xyz": "Fe-NH3.xyz",
+      "fragment_atoms": [0],
+      "ligand_atoms": null,
+      "charges": { "fragment": 0, "ligand": 0, "complex": 0 },
+      "spins":   { "fragment": 4, "ligand": 0, "complex": 4 },
+      "experimental_dg": -9.0
+    },
+    {
+      "ligand_id": "H2O",
+      "complex_xyz": "Fe-H2O.xyz",
+      "fragment_atoms": [0],
+      "ligand_atoms": null,
+      "charges": { "fragment": 0, "ligand": 0, "complex": 0 },
+      "spins":   { "fragment": 4, "ligand": 0, "complex": 4 },
+      "experimental_dg": -7.0
+    }
+  ]
+}
