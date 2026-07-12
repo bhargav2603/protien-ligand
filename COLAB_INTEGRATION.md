@@ -57,9 +57,29 @@ run("/content/out_null",   Config(reference=ReferenceModel(systematic_bias=0.0,
                                    classical_noise=0.5, correlated_noise=0.5)))
 ```
 
+## Cell 5 — molecular mode: REAL interaction energies (small clusters, no protein)
+
+The `analytic` backend runs with no extra deps. For a real result install the
+science extra and use `casscf` (no quantum computer needed):
+
+```python
+import qbind
+# no-deps demo:
+qbind.run_molecular("/content/mol_demo", backend="analytic")
+
+# real correlated result (needs pyscf):
+%pip install -q -e "{root}[science]"
+qbind.run_molecular("/content/mol_casscf", backend="casscf")   # DFT vs CASSCF on Fe-ligand clusters
+# quantum path (needs pyscf+qiskit+ffsim; reuses qadv SQD kernel):
+# qbind.run_molecular("/content/mol_sqd", backend="sqd")
+```
+
+Each writes the same graph set + `REPORT.md`. Zip/download as in the earlier cell
+(point it at the chosen out dir).
+
 ---
 
-## Moving from pilot to a real study (later, needs the science stack)
+## Moving from cluster pilot to a full protein study (later, needs Vina + DMET)
 
 Install the extra and swap stages via a config:
 

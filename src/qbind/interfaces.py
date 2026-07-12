@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import Protocol, runtime_checkable
 
-from .models import FragmentInteraction, FragmentSpec, Ligand
+from .models import FragmentSpec, Ligand
 
 
 @runtime_checkable

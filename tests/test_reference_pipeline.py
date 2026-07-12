@@ -32,6 +32,15 @@ def test_zero_bias_is_the_honest_null(tmp_path):
     assert report.correlation_improvement is None or report.correlation_improvement < 0.05
 
 
+def test_zero_coordinating_gives_no_change(tmp_path):
+    # fraction_coordinating=0 must mean zero correction and no ranking change.
+    cfg = Config(reference=ReferenceModel(fraction_coordinating=0.0, seed=2))
+    result, report, _ = run(tmp_path, cfg)
+    assert all(abs(s.delta) < 1e-9 for s in result.scores)
+    assert report.n_rank_changes == 0
+    assert not report.quantum_changed_ranking
+
+
 def test_only_coordinating_ligands_are_corrected(tmp_path):
     _, report, _ = run(tmp_path, Config(reference=ReferenceModel(seed=3)))
     study = refdata.build(ReferenceModel(seed=3))

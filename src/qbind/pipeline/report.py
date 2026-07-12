@@ -3,6 +3,8 @@ delta (the actual research deliverable), with honest framing of mode/limits.
 """
 from __future__ import annotations
 
+import os
+
 from ..models import StudyResult
 from ..runtime import Run
 from ..scoring import delta
@@ -58,7 +60,7 @@ def generate(run: Run, result: StudyResult, report: DeltaReport,
 
     w("## Figures\n")
     for f in figures:
-        w(f"- {f.split('/')[-1].split(chr(92))[-1]}")
+        w(f"- figures/{os.path.basename(f)}")
 
     path = run.results / "REPORT.md"
     path.write_text("\n".join(L) + "\n", encoding="utf-8")

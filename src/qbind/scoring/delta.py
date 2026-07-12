@@ -55,21 +55,30 @@ class DeltaReport:
 
 
 def _ranks(values: list[float]) -> np.ndarray:
-    """Dense competition ranks; rank 1 = tightest binder (most negative dG)."""
-    order = np.argsort(np.argsort(values))   # 0-based rank by ascending dG
-    return order + 1
+    """Ordinal ranks; rank 1 = tightest binder (most negative dG). Ties broken
+    deterministically so baseline and corrected rankings stay comparable."""
+    return stats.rankdata(values, method="ordinal").astype(int)
+
+
+def _stat(result) -> float:
+    """Correlation coefficient across scipy versions (>=1.9 objects, older tuples)."""
+    if hasattr(result, "statistic"):
+        return float(result.statistic)
+    if hasattr(result, "correlation"):
+        return float(result.correlation)
+    return float(result[0])
 
 
 def _safe_spearman(a, b) -> float | None:
     if len(a) < 3 or np.std(a) == 0 or np.std(b) == 0:
         return None
-    return float(stats.spearmanr(a, b).statistic)
+    return _stat(stats.spearmanr(a, b))
 
 
 def _safe_pearson(a, b) -> float | None:
     if len(a) < 3 or np.std(a) == 0 or np.std(b) == 0:
         return None
-    return float(stats.pearsonr(a, b).statistic)
+    return _stat(stats.pearsonr(a, b))
 
 
 def compute(scores: list[LigandScore]) -> DeltaReport:
@@ -79,7 +88,7 @@ def compute(scores: list[LigandScore]) -> DeltaReport:
     corr_rank = _ranks(corr)
 
     rank_shift = np.abs(base_rank - corr_rank)
-    kt = float(stats.kendalltau(base_rank, corr_rank).statistic) if len(scores) > 1 else 1.0
+    kt = _stat(stats.kendalltau(base_rank, corr_rank)) if len(scores) > 1 else 1.0
     sr = _safe_spearman(base_rank, corr_rank)
 
     have_expt = all(s.experimental_dg is not None for s in scores) and len(scores) >= 3

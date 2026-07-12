@@ -41,14 +41,22 @@ def build_lucj(ctx: Context, mf, a: ActiveSpace, n_reps=None,
     """Return a measured LUCJ QuantumCircuit, or None (caller falls back)."""
     try:
         import ffsim
-        from pyscf import cc
+        from pyscf import cc, scf
         from qiskit import QuantumCircuit, QuantumRegister
 
         norb, nelec = a.ncas, a.nelec
+        na, nb = nelec
         mf2 = _prepare_reference(mf, a)
         frozen = [i for i in range(a.mo.shape[1]) if i not in set(a.active_orbitals)]
 
-        mycc = cc.CCSD(mf2, frozen=frozen)
+        # Open-shell (na != nb) references must use UCCSD: cc.CCSD on an ROHF object
+        # dispatches to RCCSD, which is only valid closed-shell. UCCSD yields tuple
+        # t-amplitudes -> the spin-unbalanced LUCJ, which is the correct ansatz for
+        # these metal centres.
+        if na != nb:
+            mycc = cc.UCCSD(scf.addons.convert_to_uhf(mf2), frozen=frozen)
+        else:
+            mycc = cc.CCSD(mf2, frozen=frozen)
         mycc.verbose = 0
         mycc.kernel()
         t1, t2 = mycc.t1, mycc.t2

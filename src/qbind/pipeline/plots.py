@@ -143,5 +143,6 @@ def make_all(run: Run, result: StudyResult, report: DeltaReport) -> list[str]:
     paths.append(correlation_improvement(run, report))
     paths.append(ranking_change(run, result, report))
     paths.append(per_ligand_delta(run, result))
-    paths.append(fragment_diagnostic(run, result))
+    if result.fragments:                       # cluster mode carries no fragment list
+        paths.append(fragment_diagnostic(run, result))
     return [str(p) for p in paths]

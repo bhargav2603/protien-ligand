@@ -30,6 +30,32 @@ result, report, figs = qbind.run("./out")
 print(report.verdict)       # e.g. "Ranking changed AND moved toward experiment (+0.045)"
 ```
 
+## Two run modes
+
+**Reference mode** (`qbind run`) — synthetic study, no external tools. Validates
+the plumbing + graphs. Not science.
+
+**Molecular mode** (`qbind molecular`) — REAL interaction energies on small
+metal-ligand CLUSTERS (a cluster model of the active site), so the real solvers
+run without a protein:
+
+```bash
+qbind molecular --backend analytic --out ./mol   # no deps: plumbing demo
+qbind molecular --backend casscf   --out ./mol   # REAL result, needs pyscf (no quantum computer)
+qbind molecular --backend sqd      --out ./mol   # quantum solver, needs pyscf+qiskit+ffsim (reuses qadv)
+```
+
+| backend | classical baseline | correlated | needs | status |
+|---|---|---|---|---|
+| `analytic` | toy | toy+metal term | nothing | runs anywhere (demo) |
+| `dft`    | UKS | UKS | `pyscf` | sanity (≈no change) |
+| `casscf` | UKS | AVAS+CASSCF | `pyscf` | **real first result, no QC** |
+| `sqd`    | UKS | SQD (qadv) | `pyscf,qiskit,ffsim` | quantum path |
+
+Interaction energy is `E(AB) − E(A) − E(B)` with one backend; baseline uses DFT,
+corrected uses the correlated backend, and only the strongly-correlated fragment
+is re-treated — so the delta is a clean measurement of the correction.
+
 ## The graphs you get
 
 | file | what it answers |
@@ -68,17 +94,33 @@ tests/            delta, rescore-consistency, end-to-end reference (+ qadv tests
 src/qadv/         the SQD kernel (reused by SQDCorrelatedSolver)
 ```
 
-## Going from pilot to a real study
+## Phase status (what runs today vs what needs wiring)
+
+| phase | piece | where | runs now? |
+|---|---|---|---|
+| 3 | classical DFT energies | `chem/backends.py::DFTBackend` | needs `pyscf` |
+| 3 | **CASSCF correlated solver** | `chem/backends.py::CASSCFBackend` | needs `pyscf` |
+| 5 | **SQD correlated solver** | `chem/backends.py::SQDBackend` (→`qadv`) | needs `pyscf,qiskit,ffsim` |
+| 2 | cluster carving (mech. embedding) | `chem/cluster.py` | **yes** (pure) |
+| 2 | full DMET/FMO embedding | `qm/embedding.py::DMETEmbedder` | stub (upgrade) |
+| 1 | Vina docking | `classical/docking.py::VinaDockingEngine` | needs `vina` |
+| — | analysis + graphs + report | `scoring/`, `pipeline/` | **yes** |
+
+The molecular cluster path (`chem/`) is real, runnable chemistry that skips
+docking + protein QM/MM — it is the honest way to get a first CASSCF/SQD result.
+The protein path (Vina + full DMET) is the later scale-up.
+
+## Going from cluster pilot to a full protein study
 
 1. Pick a target where the correlated center is **in the pocket** (a P450, a
    Zn/Fe metalloenzyme). Assemble a benchmark CSV (`data/benchmark.py` schema).
-2. Set `docking="vina"` and wire `classical/docking.py::VinaDockingEngine`.
-3. Set `embedding` to a real DMET/FMO build (`qm/embedding.py::DMETEmbedder`) that
-   exposes each fragment's embedded integrals.
-4. **Answer the question classically first:** `correlated_solver="casscf"`. You do
-   not need a quantum computer to learn whether the correction moves rankings.
-5. Only when a fragment exceeds classical exact reach, switch to
-   `correlated_solver="sqd"` (reuses the `qadv` kernel; emulated first, hardware last).
+2. Dock with `classical/docking.py::VinaDockingEngine` (needs `vina`).
+3. Build a real region + DMET/FMO embedding (`qm/embedding.py::DMETEmbedder`) to
+   replace the cluster carving with electrostatic embedding.
+4. **Answer the question classically first** (`--backend casscf`). You do not need
+   a quantum computer to learn whether the correction moves rankings.
+5. Only when a fragment exceeds classical exact reach, switch to `--backend sqd`
+   (reuses the `qadv` kernel; emulate first, hardware last).
 
 The consistency rule holds throughout: change only the correlated fragment's
 solver between baseline and corrected, or the delta stops meaning anything.
@@ -86,5 +128,5 @@ solver between baseline and corrected, or the delta stops meaning anything.
 ## Tests
 
 ```bash
-pip install -e ".[dev]" && pytest      # 26 tests, none require the quantum-chem stack
+pip install -e ".[dev]" && pytest      # 39 tests, none require the quantum-chem stack
 ```

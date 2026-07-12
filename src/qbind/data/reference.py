@@ -40,7 +40,10 @@ class ReferenceStudy:
 def build(model: ReferenceModel) -> ReferenceStudy:
     rng = np.random.default_rng(model.seed)
     n = model.n_ligands
-    n_coord = max(1, round(n * model.fraction_coordinating))
+    # Honest rounding: fraction_coordinating=0 => zero coordinating ligands, which
+    # yields zero correction and a "no change" verdict (the correct null), rather
+    # than silently forcing one.
+    n_coord = int(round(n * model.fraction_coordinating))
     coord_flags = np.array([True] * n_coord + [False] * (n - n_coord))
     rng.shuffle(coord_flags)
 
